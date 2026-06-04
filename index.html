@@ -15,7 +15,7 @@
         body {
             font-family: 'Courier New', monospace;
             background: #000;
-            color: #0f0;
+            color: rgb(#0f0);
             overflow-x: hidden;
             min-height: 100vh;
         }
@@ -328,6 +328,125 @@
             display: none !important;
         }
 
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal {
+            background: rgba(0, 20, 0, 0.95);
+            border: 2px solid #0f0;
+            border-radius: 15px;
+            padding: 40px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 0 30px rgba(0, 255, 0, 0.5);
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        .modal-title {
+            font-size: 2rem;
+            text-align: center;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px #0f0;
+        }
+
+        .modal-subtitle {
+            font-size: 0.9rem;
+            text-align: center;
+            color: #0a0;
+            margin-bottom: 25px;
+        }
+
+        .modal-input {
+            width: 100%;
+            background: rgba(0, 20, 0, 0.9);
+            border: 1px solid #0f0;
+            color: #0f0;
+            padding: 15px 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 1.2rem;
+            border-radius: 5px;
+            text-align: center;
+            letter-spacing: 2px;
+            outline: none;
+            transition: all 0.3s ease;
+            margin-bottom: 15px;
+        }
+
+        .modal-input:focus {
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+        }
+
+        .modal-input::placeholder {
+            color: #050;
+            letter-spacing: 1px;
+        }
+
+        .modal-error {
+            color: #f00;
+            text-align: center;
+            font-size: 0.9rem;
+            min-height: 20px;
+            margin-bottom: 15px;
+        }
+
+        .modal-btn {
+            width: 100%;
+            background: transparent;
+            border: 1px solid #0f0;
+            color: #0f0;
+            padding: 15px 30px;
+            font-family: 'Courier New', monospace;
+            font-size: 1.1rem;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .modal-btn:hover {
+            background: #0f0;
+            color: #000;
+            box-shadow: 0 0 20px #0f0;
+        }
+
+        .modal-rules {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(0, 30, 0, 0.5);
+            border-radius: 5px;
+            font-size: 0.8rem;
+            color: #0a0;
+        }
+
+        .modal-rules ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .modal-rules li {
+            margin: 5px 0;
+            padding-left: 15px;
+            position: relative;
+        }
+
+        .modal-rules li:before {
+            content: '›';
+            position: absolute;
+            left: 0;
+            color: #0f0;
+        }
+
         @media (max-width: 480px) {
             .logo {
                 font-size: 2.5rem;
@@ -361,6 +480,24 @@
 <body>
     <canvas id="matrix-canvas"></canvas>
     
+    <div class="modal-overlay hidden" id="registration-modal">
+        <div class="modal">
+            <div class="modal-title">CHOOSE YOUR ID</div>
+            <div class="modal-subtitle">This will be your permanent identifier</div>
+            <input type="text" class="modal-input" id="username-input" placeholder="Enter username" maxlength="20" onkeypress="handleUsernameKeyPress(event)">
+            <div class="modal-error" id="username-error"></div>
+            <button class="modal-btn" onclick="registerUsername()">CREATE ID</button>
+            <div class="modal-rules">
+                <ul>
+                    <li>3 to 20 characters</li>
+                    <li>Letters, numbers, hyphen and underscore only</li>
+                    <li>No spaces allowed</li>
+                    <li>Cannot be changed later</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
     <div class="container">
         <div class="header">
             <div class="logo">OMG</div>
@@ -376,7 +513,7 @@
         <div class="panel">
             <div class="id-label">ENTER PARTNER ID</div>
             <div class="input-group">
-                <input type="text" id="partner-id" placeholder="6-CODE" maxlength="6">
+                <input type="text" id="partner-id" placeholder="PARTNER ID" maxlength="20">
                 <button class="btn" id="connect-btn" onclick="connectToPeer()">CONNECT</button>
                 <button class="btn btn-danger" id="disconnect-btn" onclick="disconnect()" style="display: none;">HANG UP</button>
             </div>
@@ -492,18 +629,57 @@
             }
         }
 
-        // ID Generation
-        function generateId() {
-            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-            let id = '';
-            for (let i = 0; i < 6; i++) {
-                id += chars.charAt(Math.floor(Math.random() * chars.length));
+        // Username System with localStorage
+        let myId = null;
+
+        function validateUsername(username) {
+            if (username.length < 3 || username.length > 20) {
+                return 'Username must be between 3 and 20 characters';
             }
-            return id;
+            if (!/^[a-zA-Z0-9_-]+$/.test(username)) {
+                return 'Only letters, numbers, hyphen and underscore allowed';
+            }
+            if (/\s/.test(username)) {
+                return 'No spaces allowed';
+            }
+            return null;
         }
 
-        const myId = generateId();
-        document.getElementById('my-id').textContent = myId;
+        function handleUsernameKeyPress(event) {
+            if (event.key === 'Enter') {
+                registerUsername();
+            }
+        }
+
+        function registerUsername() {
+            const input = document.getElementById('username-input');
+            const errorDiv = document.getElementById('username-error');
+            const username = input.value.trim();
+
+            const error = validateUsername(username);
+            if (error) {
+                errorDiv.textContent = error;
+                return;
+            }
+
+            errorDiv.textContent = '';
+            localStorage.setItem('omg_username', username);
+            myId = username;
+            document.getElementById('my-id').textContent = myId;
+            document.getElementById('registration-modal').classList.add('hidden');
+            initPeer();
+        }
+
+        function checkUsername() {
+            const savedUsername = localStorage.getItem('omg_username');
+            if (savedUsername) {
+                myId = savedUsername;
+                document.getElementById('my-id').textContent = myId;
+                initPeer();
+            } else {
+                document.getElementById('registration-modal').classList.remove('hidden');
+            }
+        }
 
         // Copy ID
         function copyId() {
@@ -592,10 +768,16 @@
         }
 
         function connectToPeer() {
-            const partnerId = document.getElementById('partner-id').value.toUpperCase().trim();
+            const partnerId = document.getElementById('partner-id').value.trim();
             
-            if (partnerId.length !== 6) {
-                document.getElementById('status').textContent = 'INVALID ID (MUST BE 6 CHARACTERS)';
+            if (partnerId.length < 3 || partnerId.length > 20) {
+                document.getElementById('status').textContent = 'INVALID ID (MUST BE 3-20 CHARACTERS)';
+                return;
+            }
+
+            const error = validateUsername(partnerId);
+            if (error) {
+                document.getElementById('status').textContent = error.toUpperCase();
                 return;
             }
 
@@ -774,7 +956,7 @@
         }
 
         // Initialize
-        initPeer();
+        checkUsername();
 
         // Handle page unload
         window.addEventListener('beforeunload', () => {
