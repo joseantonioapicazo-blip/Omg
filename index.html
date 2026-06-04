@@ -716,6 +716,7 @@
         let isMuted = false;
         let isCameraOn = true;
         let peerOnline = false;
+        let connOpen = false;
 
         function initPeer() {
             // Destroy existing peer before creating new one
@@ -724,11 +725,28 @@
             }
 
             peerOnline = false;
+            connOpen = false;
             document.getElementById('status').textContent = 'INITIALIZING PEER...';
             document.getElementById('local-video-status').textContent = 'INITIALIZING...';
             document.getElementById('remote-video-status').textContent = 'WAITING FOR VIDEO';
 
-            peer = new Peer(myId);
+            const peerConfig = {
+                debug: 2,
+                config: {
+                    iceServers: [
+                        { urls: 'stun:stun.l.google.com:19302' },
+                        { urls: 'stun:stun1.l.google.com:19302' },
+                        { urls: 'stun:stun2.l.google.com:19302' },
+                        { urls: 'stun:stun3.l.google.com:19302' },
+                        { urls: 'stun:stun4.l.google.com:19302' },
+                        { urls: 'stun:global.stun.twilio.com:3478' },
+                        { urls: 'stun:stun.cloudflare.com:3478' }
+                    ]
+                }
+            };
+
+            console.log('[PEER] Initializing with config:', peerConfig);
+            peer = new Peer(myId, peerConfig);
 
             peer.on('open', (id) => {
                 console.log('[PEER] Peer opened with ID:', id);
@@ -746,25 +764,45 @@
 
             peer.on('call', (incomingCall) => {
                 console.log('[PEER] Incoming call from:', incomingCall.peer);
+                console.log('[PEER] Incoming call metadata:', incomingCall.metadata);
+                console.log('[PEER] Incoming call connection type:', incomingCall.connectionType);
+                document.getElementById('status').textContent = 'INCOMING CALL...';
+                
                 navigator.mediaDevices.getUserMedia({ video: true, audio: true })
                     .then(stream => {
                         console.log('[CAMERA] Local camera access granted');
                         localStream = stream;
                         document.getElementById('local-video').srcObject = stream;
                         document.getElementById('local-video-status').style.display = 'none';
+                        
+                        console.log('[CALL] Answering incoming call with stream');
                         incomingCall.answer(stream);
                         call = incomingCall;
                         
                         call.on('stream', (remoteStream) => {
                             console.log('[CALL] Remote stream received');
+                            console.log('[CALL] Remote stream tracks:', remoteStream.getTracks().length);
+                            remoteStream.getTracks().forEach(track => {
+                                console.log('[CALL] Track kind:', track.kind, 'enabled:', track.enabled, 'muted:', track.muted);
+                            });
                             document.getElementById('remote-video').srcObject = remoteStream;
                             document.getElementById('remote-video-status').style.display = 'none';
+                        });
+
+                        call.on('close', () => {
+                            console.log('[CALL] Call closed');
+                            handleDisconnect();
                         });
 
                         call.on('error', (err) => {
                             console.error('[CALL ERROR] Type:', err.type, 'Message:', err.message);
                             console.error('[CALL ERROR] Full error:', err);
+                            console.error('[CALL ERROR] Stack:', err.stack);
                             document.getElementById('status').textContent = `CALL ERROR: ${err.type} - ${err.message}`;
+                        });
+
+                        call.on('iceStateChanged', (state) => {
+                            console.log('[CALL] ICE state changed:', state);
                         });
 
                         document.getElementById('video-controls').classList.remove('hidden');
@@ -777,19 +815,31 @@
                         document.getElementById('local-video-status').textContent = 'CAMERA DISCONNECTED';
                         document.getElementById('status').textContent = 'CAMERA ACCESS DENIED';
                         // Still answer the call even without camera
+                        console.log('[CALL] Answering incoming call without camera');
                         incomingCall.answer();
                         call = incomingCall;
                         
                         call.on('stream', (remoteStream) => {
                             console.log('[CALL] Remote stream received (no local camera)');
+                            console.log('[CALL] Remote stream tracks:', remoteStream.getTracks().length);
                             document.getElementById('remote-video').srcObject = remoteStream;
                             document.getElementById('remote-video-status').style.display = 'none';
+                        });
+
+                        call.on('close', () => {
+                            console.log('[CALL] Call closed');
+                            handleDisconnect();
                         });
 
                         call.on('error', (err) => {
                             console.error('[CALL ERROR] Type:', err.type, 'Message:', err.message);
                             console.error('[CALL ERROR] Full error:', err);
+                            console.error('[CALL ERROR] Stack:', err.stack);
                             document.getElementById('status').textContent = `CALL ERROR: ${err.type} - ${err.message}`;
+                        });
+
+                        call.on('iceStateChanged', (state) => {
+                            console.log('[CALL] ICE state changed:', state);
                         });
 
                         document.getElementById('video-controls').classList.remove('hidden');
@@ -801,6 +851,7 @@
             peer.on('error', (err) => {
                 console.error('[PEER ERROR] Type:', err.type, 'Message:', err.message);
                 console.error('[PEER ERROR] Full error:', err);
+                console.error('[PEER ERROR] Stack:', err.stack);
                 document.getElementById('status').textContent = `PEER ERROR: ${err.type} - ${err.message}`;
                 peerOnline = false;
                 // Clean up peer on error to allow reconnection
@@ -830,6 +881,8 @@
         function setupConnection() {
             conn.on('open', () => {
                 console.log('[CONN] Connection opened with peer:', conn.peer);
+                console.log('[CONN] Data channel is now open');
+                connOpen = true;
                 document.getElementById('status').textContent = 'LINK ESTABLISHED';
                 document.getElementById('connect-btn').style.display = 'none';
                 document.getElementById('disconnect-btn').style.display = 'inline-block';
@@ -839,6 +892,7 @@
             });
 
             conn.on('data', (data) => {
+                console.log('[CONN] Data received:', data);
                 if (data.type === 'chat') {
                     addChatMessage(data.message, 'peer');
                     playSound('message');
@@ -847,14 +901,21 @@
 
             conn.on('close', () => {
                 console.log('[CONN] Connection closed');
+                connOpen = false;
                 handleDisconnect();
             });
 
             conn.on('error', (err) => {
                 console.error('[CONN ERROR] Type:', err.type, 'Message:', err.message);
                 console.error('[CONN ERROR] Full error:', err);
+                console.error('[CONN ERROR] Stack:', err.stack);
                 document.getElementById('status').textContent = `CONN ERROR: ${err.type} - ${err.message}`;
+                connOpen = false;
                 handleDisconnect();
+            });
+
+            conn.on('iceStateChanged', (state) => {
+                console.log('[CONN] ICE state changed:', state);
             });
         }
 
@@ -884,22 +945,59 @@
             }
 
             console.log('[CONNECT] Attempting to connect to peer:', partnerId);
+            console.log('[CONNECT] Peer ID:', myId, 'Target ID:', partnerId);
             document.getElementById('status').textContent = 'CONNECTING...';
 
             conn = peer.connect(partnerId);
             setupConnection();
 
-            // Initiate video call
+            // Wait for data connection to open before initiating video call
+            const waitForConnection = setInterval(() => {
+                if (connOpen) {
+                    clearInterval(waitForConnection);
+                    console.log('[CONNECT] Data connection is open, initiating video call');
+                    initiateVideoCall(partnerId);
+                } else if (conn && !conn.open) {
+                    console.log('[CONNECT] Waiting for data connection to open...');
+                }
+            }, 500);
+
+            // Timeout after 15 seconds
+            setTimeout(() => {
+                clearInterval(waitForConnection);
+                if (!connOpen) {
+                    console.error('[CONNECT] Timeout waiting for data connection');
+                    document.getElementById('status').textContent = 'CONNECTION TIMEOUT - PEER MAY BE OFFLINE';
+                }
+            }, 15000);
+        }
+
+        function initiateVideoCall(partnerId) {
+            console.log('[CALL] Initiating video call to:', partnerId);
+            console.log('[CALL] Peer connection state:', peer ? peer._connection.readyState : 'peer not initialized');
+            document.getElementById('status').textContent = 'ESTABLISHING VIDEO CALL...';
+
             navigator.mediaDevices.getUserMedia({ video: true, audio: true })
                 .then(stream => {
                     console.log('[CAMERA] Local camera access granted for outgoing call');
+                    console.log('[CAMERA] Local stream tracks:', stream.getTracks().length);
+                    stream.getTracks().forEach(track => {
+                        console.log('[CAMERA] Track kind:', track.kind, 'enabled:', track.enabled, 'muted:', track.muted);
+                    });
                     localStream = stream;
                     document.getElementById('local-video').srcObject = stream;
                     document.getElementById('local-video-status').style.display = 'none';
+                    
+                    console.log('[CALL] Calling peer with stream');
                     call = peer.call(partnerId, stream);
+                    console.log('[CALL] Call object created, waiting for remote stream...');
                     
                     call.on('stream', (remoteStream) => {
                         console.log('[CALL] Remote stream received');
+                        console.log('[CALL] Remote stream tracks:', remoteStream.getTracks().length);
+                        remoteStream.getTracks().forEach(track => {
+                            console.log('[CALL] Track kind:', track.kind, 'enabled:', track.enabled, 'muted:', track.muted);
+                        });
                         document.getElementById('remote-video').srcObject = remoteStream;
                         document.getElementById('remote-video-status').style.display = 'none';
                         document.getElementById('status').textContent = 'PEER CONNECTED';
@@ -913,8 +1011,21 @@
                     call.on('error', (err) => {
                         console.error('[CALL ERROR] Type:', err.type, 'Message:', err.message);
                         console.error('[CALL ERROR] Full error:', err);
+                        console.error('[CALL ERROR] Stack:', err.stack);
                         document.getElementById('status').textContent = `CALL ERROR: ${err.type} - ${err.message}`;
                     });
+
+                    call.on('iceStateChanged', (state) => {
+                        console.log('[CALL] ICE state changed:', state);
+                    });
+
+                    // Add timeout for call connection
+                    setTimeout(() => {
+                        if (call && !document.getElementById('remote-video').srcObject) {
+                            console.error('[CALL] Timeout waiting for remote stream');
+                            document.getElementById('status').textContent = 'CALL TIMEOUT - PEER MAY NOT HAVE CAMERA';
+                        }
+                    }, 20000);
                 })
                 .catch(err => {
                     console.error('[CAMERA ERROR] Error getting media:', err);
@@ -922,10 +1033,12 @@
                     document.getElementById('local-video-status').textContent = 'CAMERA DISCONNECTED';
                     document.getElementById('status').textContent = 'CAMERA ACCESS DENIED - CONNECTING WITHOUT CAMERA';
                     // Still attempt to connect without camera
+                    console.log('[CALL] Calling peer without camera');
                     call = peer.call(partnerId);
                     
                     call.on('stream', (remoteStream) => {
                         console.log('[CALL] Remote stream received (no local camera)');
+                        console.log('[CALL] Remote stream tracks:', remoteStream.getTracks().length);
                         document.getElementById('remote-video').srcObject = remoteStream;
                         document.getElementById('remote-video-status').style.display = 'none';
                         document.getElementById('status').textContent = 'PEER CONNECTED (NO CAMERA)';
@@ -939,7 +1052,12 @@
                     call.on('error', (err) => {
                         console.error('[CALL ERROR] Type:', err.type, 'Message:', err.message);
                         console.error('[CALL ERROR] Full error:', err);
+                        console.error('[CALL ERROR] Stack:', err.stack);
                         document.getElementById('status').textContent = `CALL ERROR: ${err.type} - ${err.message}`;
+                    });
+
+                    call.on('iceStateChanged', (state) => {
+                        console.log('[CALL] ICE state changed:', state);
                     });
                 });
         }
@@ -1062,6 +1180,7 @@
 
         function handleDisconnect() {
             console.log('[DISCONNECT] Handling disconnect');
+            console.log('[DISCONNECT] Peer online:', peerOnline, 'Conn open:', connOpen);
             if (localStream) {
                 localStream.getTracks().forEach(track => track.stop());
                 localStream = null;
@@ -1070,6 +1189,7 @@
             // Reset connection variables
             call = null;
             conn = null;
+            connOpen = false;
             
             // Reset video elements but keep section visible
             document.getElementById('local-video').srcObject = null;
