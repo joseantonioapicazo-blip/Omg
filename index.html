@@ -126,69 +126,6 @@
             box-shadow: 0 0 20px #f00;
         }
 
-        .toggle-container {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 15px;
-            margin-top: 15px;
-        }
-
-        .toggle-switch {
-            position: relative;
-            width: 80px;
-            height: 40px;
-        }
-
-        .toggle-switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
-        .toggle-slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 20, 0, 0.9);
-            border: 1px solid #0f0;
-            border-radius: 20px;
-            transition: all 0.3s ease;
-        }
-
-        .toggle-slider:before {
-            position: absolute;
-            content: "";
-            height: 32px;
-            width: 32px;
-            left: 4px;
-            bottom: 3px;
-            background: #050;
-            border: 1px solid #0f0;
-            border-radius: 50%;
-            transition: all 0.3s ease;
-        }
-
-        .toggle-switch input:checked + .toggle-slider {
-            background: rgba(0, 50, 0, 0.9);
-            box-shadow: 0 0 15px rgba(0, 255, 0, 0.3);
-        }
-
-        .toggle-switch input:checked + .toggle-slider:before {
-            transform: translateX(40px);
-            background: #0f0;
-            box-shadow: 0 0 10px #0f0;
-        }
-
-        .toggle-label {
-            font-size: 0.9rem;
-            color: #0a0;
-            letter-spacing: 2px;
-        }
-
         .input-group {
             display: flex;
             gap: 10px;
@@ -258,12 +195,12 @@
         }
 
         #local-video {
-            transform: none !important;
+            transform: scaleX(-1);
         }
 
     
         #remote-video {
-            transform: none;
+            transform: scaleX(-1);
         }
 
         .video-label {
@@ -275,20 +212,6 @@
             border-radius: 5px;
             font-size: 0.8rem;
             border: 1px solid #0f0;
-        }
-
-        .video-status {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0, 0, 0, 0.9);
-            padding: 15px 20px;
-            border-radius: 10px;
-            font-size: 1rem;
-            border: 1px solid #0f0;
-            text-align: center;
-            z-index: 10;
         }
 
         .video-controls {
@@ -405,125 +328,6 @@
             display: none !important;
         }
 
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.9);
-            z-index: 1000;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .modal {
-            background: rgba(0, 20, 0, 0.95);
-            border: 2px solid #0f0;
-            border-radius: 15px;
-            padding: 40px;
-            max-width: 500px;
-            width: 90%;
-            box-shadow: 0 0 30px rgba(0, 255, 0, 0.5);
-            animation: fadeIn 0.5s ease-in;
-        }
-
-        .modal-title {
-            font-size: 2rem;
-            text-align: center;
-            margin-bottom: 10px;
-            text-shadow: 0 0 10px #0f0;
-        }
-
-        .modal-subtitle {
-            font-size: 0.9rem;
-            text-align: center;
-            color: #0a0;
-            margin-bottom: 25px;
-        }
-
-        .modal-input {
-            width: 100%;
-            background: rgba(0, 20, 0, 0.9);
-            border: 1px solid #0f0;
-            color: #0f0;
-            padding: 15px 20px;
-            font-family: 'Courier New', monospace;
-            font-size: 1.2rem;
-            border-radius: 5px;
-            text-align: center;
-            letter-spacing: 2px;
-            outline: none;
-            transition: all 0.3s ease;
-            margin-bottom: 15px;
-        }
-
-        .modal-input:focus {
-            box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
-        }
-
-        .modal-input::placeholder {
-            color: #050;
-            letter-spacing: 1px;
-        }
-
-        .modal-error {
-            color: #f00;
-            text-align: center;
-            font-size: 0.9rem;
-            min-height: 20px;
-            margin-bottom: 15px;
-        }
-
-        .modal-btn {
-            width: 100%;
-            background: transparent;
-            border: 1px solid #0f0;
-            color: #0f0;
-            padding: 15px 30px;
-            font-family: 'Courier New', monospace;
-            font-size: 1.1rem;
-            cursor: pointer;
-            border-radius: 5px;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
-
-        .modal-btn:hover {
-            background: #0f0;
-            color: #000;
-            box-shadow: 0 0 20px #0f0;
-        }
-
-        .modal-rules {
-            margin-top: 20px;
-            padding: 15px;
-            background: rgba(0, 30, 0, 0.5);
-            border-radius: 5px;
-            font-size: 0.8rem;
-            color: #0a0;
-        }
-
-        .modal-rules ul {
-            list-style: none;
-            padding-left: 0;
-        }
-
-        .modal-rules li {
-            margin: 5px 0;
-            padding-left: 15px;
-            position: relative;
-        }
-
-        .modal-rules li:before {
-            content: '›';
-            position: absolute;
-            left: 0;
-            color: #0f0;
-        }
-
         @media (max-width: 480px) {
             .logo {
                 font-size: 2.5rem;
@@ -557,24 +361,6 @@
 <body>
     <canvas id="matrix-canvas"></canvas>
     
-    <div class="modal-overlay hidden" id="registration-modal">
-        <div class="modal">
-            <div class="modal-title">CHOOSE YOUR ID</div>
-            <div class="modal-subtitle">This will be your permanent identifier</div>
-            <input type="text" class="modal-input" id="username-input" placeholder="Enter username" maxlength="20" onkeypress="handleUsernameKeyPress(event)">
-            <div class="modal-error" id="username-error"></div>
-            <button class="modal-btn" onclick="registerUsername()">CREATE ID</button>
-            <div class="modal-rules">
-                <ul>
-                    <li>3 to 20 characters</li>
-                    <li>Letters, numbers, hyphen and underscore only</li>
-                    <li>No spaces allowed</li>
-                    <li>Cannot be changed later</li>
-                </ul>
-            </div>
-        </div>
-    </div>
-    
     <div class="container">
         <div class="header">
             <div class="logo">OMG</div>
@@ -590,30 +376,21 @@
         <div class="panel">
             <div class="id-label">ENTER PARTNER ID</div>
             <div class="input-group">
-                <input type="text" id="partner-id" placeholder="PARTNER ID" maxlength="20">
+                <input type="text" id="partner-id" placeholder="6-CODE" maxlength="6">
                 <button class="btn" id="connect-btn" onclick="connectToPeer()">CONNECT</button>
                 <button class="btn btn-danger" id="disconnect-btn" onclick="disconnect()" style="display: none;">HANG UP</button>
             </div>
-            <div class="toggle-container">
-                <span class="toggle-label" id="toggle-status">UNAVAILABLE</span>
-                <label class="toggle-switch">
-                    <input type="checkbox" id="availability-toggle" onchange="toggleAvailability()">
-                    <span class="toggle-slider"></span>
-                </label>
-            </div>
-            <div class="status" id="status">INITIALIZING...</div>
+            <div class="status" id="status">INITIALIZING CONNECTION...</div>
         </div>
 
-        <div class="panel video-section" id="video-section">
+        <div class="panel video-section hidden" id="video-section">
             <div class="video-container">
                 <div class="video-label">LOCAL</div>
                 <video id="local-video" autoplay muted playsinline></video>
-                <div id="local-video-status" class="video-status">INITIALIZING...</div>
             </div>
             <div class="video-container">
                 <div class="video-label">REMOTE</div>
                 <video id="remote-video" autoplay playsinline></video>
-                <div id="remote-video-status" class="video-status">WAITING FOR VIDEO</div>
             </div>
         </div>
 
@@ -715,59 +492,18 @@
             }
         }
 
-        // Username System with localStorage
-        let myId = null;
-
-        function validateUsername(username) {
-            if (username.length < 3 || username.length > 20) {
-                return 'Username must be between 3 and 20 characters';
+        // ID Generation
+        function generateId() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let id = '';
+            for (let i = 0; i < 6; i++) {
+                id += chars.charAt(Math.floor(Math.random() * chars.length));
             }
-            if (!/^[a-zA-Z0-9_-]+$/.test(username)) {
-                return 'Only letters, numbers, hyphen and underscore allowed';
-            }
-            if (/\s/.test(username)) {
-                return 'No spaces allowed';
-            }
-            return null;
+            return id;
         }
 
-        function handleUsernameKeyPress(event) {
-            if (event.key === 'Enter') {
-                registerUsername();
-            }
-        }
-
-        function registerUsername() {
-            const input = document.getElementById('username-input');
-            const errorDiv = document.getElementById('username-error');
-            const username = input.value.trim();
-
-            const error = validateUsername(username);
-            if (error) {
-                errorDiv.textContent = error;
-                return;
-            }
-
-            errorDiv.textContent = '';
-            localStorage.setItem('omg_username', username);
-            myId = username;
-            document.getElementById('my-id').textContent = myId;
-            document.getElementById('registration-modal').classList.add('hidden');
-            // Don't auto-init peer, let user toggle availability
-            document.getElementById('status').textContent = 'OFFLINE - TOGGLE TO BECOME AVAILABLE';
-        }
-
-        function checkUsername() {
-            const savedUsername = localStorage.getItem('omg_username');
-            if (savedUsername) {
-                myId = savedUsername;
-                document.getElementById('my-id').textContent = myId;
-                // Don't auto-init peer, let user toggle availability
-                document.getElementById('status').textContent = 'OFFLINE - TOGGLE TO BECOME AVAILABLE';
-            } else {
-                document.getElementById('registration-modal').classList.remove('hidden');
-            }
-        }
+        const myId = generateId();
+        document.getElementById('my-id').textContent = myId;
 
         // Copy ID
         function copyId() {
@@ -787,133 +523,49 @@
         let call;
         let isMuted = false;
         let isCameraOn = true;
-        let peerOnline = false;
 
         function initPeer() {
-            // Destroy existing peer before creating new one
-            if (peer && !peer.destroyed) {
-                peer.destroy();
-            }
-
-            peerOnline = false;
-            document.getElementById('status').textContent = 'INITIALIZING PEER...';
-            document.getElementById('local-video-status').textContent = 'INITIALIZING...';
-            document.getElementById('remote-video-status').textContent = 'WAITING FOR VIDEO';
-
             peer = new Peer(myId);
 
             peer.on('open', (id) => {
-                console.log('[PEER] Peer opened with ID:', id);
-                console.log('[PEER] Peer is now online and ready for connections');
-                peerOnline = true;
-                document.getElementById('status').textContent = 'AVAILABLE - WAITING FOR CONNECTIONS';
-                document.getElementById('toggle-status').textContent = 'AVAILABLE';
-                document.getElementById('local-video-status').textContent = 'WAITING FOR CAMERA';
-                addSystemMessage('You are now available for connections');
+                document.getElementById('status').textContent = 'WAITING FOR PEER';
             });
 
             peer.on('connection', (connection) => {
-                console.log('[PEER] Incoming connection from:', connection.peer);
                 conn = connection;
                 setupConnection();
             });
 
             peer.on('call', (incomingCall) => {
-                console.log('[PEER] Incoming call from:', incomingCall.peer);
                 navigator.mediaDevices.getUserMedia({ video: true, audio: true })
                     .then(stream => {
-                        console.log('[CAMERA] Local camera access granted');
                         localStream = stream;
                         document.getElementById('local-video').srcObject = stream;
-                        document.getElementById('local-video-status').style.display = 'none';
                         incomingCall.answer(stream);
                         call = incomingCall;
                         
                         call.on('stream', (remoteStream) => {
-                            console.log('[CALL] Remote stream received');
                             document.getElementById('remote-video').srcObject = remoteStream;
-                            document.getElementById('remote-video-status').style.display = 'none';
                         });
 
-                        call.on('error', (err) => {
-                            console.error('[CALL ERROR] Type:', err.type, 'Message:', err.message);
-                            console.error('[CALL ERROR] Full error:', err);
-                            const errorMsg = `CALL ERROR: ${err.type} - ${err.message}`;
-                            document.getElementById('status').textContent = errorMsg;
-                            addSystemMessage(errorMsg);
-                        });
-
-                        document.getElementById('video-controls').classList.remove('hidden');
+                        showVideoSection();
                         document.getElementById('status').textContent = 'PEER CONNECTED';
                         playSound('connect');
                     })
                     .catch(err => {
-                        console.error('[CAMERA ERROR] Error getting media:', err);
-                        console.error('[CAMERA ERROR] Error name:', err.name, 'Message:', err.message);
-                        const errorMsg = 'CAMERA ACCESS DENIED';
-                        document.getElementById('local-video-status').textContent = 'CAMERA DISCONNECTED';
-                        document.getElementById('status').textContent = errorMsg;
-                        addSystemMessage(errorMsg);
-                        // Still answer the call even without camera
-                        incomingCall.answer();
-                        call = incomingCall;
-                        
-                        call.on('stream', (remoteStream) => {
-                            console.log('[CALL] Remote stream received (no local camera)');
-                            document.getElementById('remote-video').srcObject = remoteStream;
-                            document.getElementById('remote-video-status').style.display = 'none';
-                        });
-
-                        call.on('error', (err) => {
-                            console.error('[CALL ERROR] Type:', err.type, 'Message:', err.message);
-                            console.error('[CALL ERROR] Full error:', err);
-                            const errorMsg = `CALL ERROR: ${err.type} - ${err.message}`;
-                            document.getElementById('status').textContent = errorMsg;
-                            addSystemMessage(errorMsg);
-                        });
-
-                        document.getElementById('video-controls').classList.remove('hidden');
-                        document.getElementById('status').textContent = 'PEER CONNECTED (NO CAMERA)';
-                        playSound('connect');
+                        console.error('Error getting media:', err);
+                        document.getElementById('status').textContent = 'CAMERA ACCESS DENIED';
                     });
             });
 
             peer.on('error', (err) => {
-                console.error('[PEER ERROR] Type:', err.type, 'Message:', err.message);
-                console.error('[PEER ERROR] Full error:', err);
-                const errorMsg = `PEER ERROR: ${err.type} - ${err.message}`;
-                document.getElementById('status').textContent = errorMsg;
-                addSystemMessage(errorMsg);
-                document.getElementById('availability-toggle').checked = false;
-                document.getElementById('toggle-status').textContent = 'UNAVAILABLE';
-                peerOnline = false;
-                // Clean up peer on error to allow reconnection
-                if (peer && !peer.destroyed) {
-                    peer.destroy();
-                }
-                peer = null;
-            });
-
-            peer.on('close', () => {
-                console.log('[PEER] Peer connection closed');
-                peerOnline = false;
-                handleDisconnect();
-            });
-
-            peer.on('disconnected', () => {
-                console.log('[PEER] Peer disconnected from server');
-                peerOnline = false;
-                document.getElementById('status').textContent = 'PEER DISCONNECTED - RECONNECTING...';
-                // Attempt to reconnect
-                if (peer && !peer.destroyed) {
-                    peer.reconnect();
-                }
+                console.error('Peer error:', err);
+                document.getElementById('status').textContent = 'CONNECTION ERROR';
             });
         }
 
         function setupConnection() {
             conn.on('open', () => {
-                console.log('[CONN] Connection opened with peer:', conn.peer);
                 document.getElementById('status').textContent = 'LINK ESTABLISHED';
                 document.getElementById('connect-btn').style.display = 'none';
                 document.getElementById('disconnect-btn').style.display = 'inline-block';
@@ -930,53 +582,28 @@
             });
 
             conn.on('close', () => {
-                console.log('[CONN] Connection closed');
                 handleDisconnect();
             });
 
             conn.on('error', (err) => {
-                console.error('[CONN ERROR] Type:', err.type, 'Message:', err.message);
-                console.error('[CONN ERROR] Full error:', err);
-                const errorMsg = `CONN ERROR: ${err.type} - ${err.message}`;
-                document.getElementById('status').textContent = errorMsg;
-                addSystemMessage(errorMsg);
+                console.error('Connection error:', err);
                 handleDisconnect();
             });
         }
 
         function connectToPeer() {
-            const partnerId = document.getElementById('partner-id').value.trim();
+            const partnerId = document.getElementById('partner-id').value.toUpperCase().trim();
             
-            if (!peerOnline) {
-                const errorMsg = 'YOU ARE NOT AVAILABLE - TOGGLE AVAILABILITY FIRST';
-                document.getElementById('status').textContent = errorMsg;
-                addSystemMessage(errorMsg);
-                console.log('[CONNECT] Cannot connect - user is not available');
-                return;
-            }
-
-            if (partnerId.length < 3 || partnerId.length > 20) {
-                const errorMsg = 'INVALID ID (MUST BE 3-20 CHARACTERS)';
-                document.getElementById('status').textContent = errorMsg;
-                addSystemMessage(errorMsg);
-                return;
-            }
-
-            const error = validateUsername(partnerId);
-            if (error) {
-                document.getElementById('status').textContent = error.toUpperCase();
-                addSystemMessage(error.toUpperCase());
+            if (partnerId.length !== 6) {
+                document.getElementById('status').textContent = 'INVALID ID (MUST BE 6 CHARACTERS)';
                 return;
             }
 
             if (partnerId === myId) {
-                const errorMsg = 'CANNOT CONNECT TO YOURSELF';
-                document.getElementById('status').textContent = errorMsg;
-                addSystemMessage(errorMsg);
+                document.getElementById('status').textContent = 'CANNOT CONNECT TO YOURSELF';
                 return;
             }
 
-            console.log('[CONNECT] Attempting to connect to peer:', partnerId);
             document.getElementById('status').textContent = 'CONNECTING...';
 
             conn = peer.connect(partnerId);
@@ -985,60 +612,34 @@
             // Initiate video call
             navigator.mediaDevices.getUserMedia({ video: true, audio: true })
                 .then(stream => {
-                    console.log('[CAMERA] Local camera access granted for outgoing call');
                     localStream = stream;
                     document.getElementById('local-video').srcObject = stream;
-                    document.getElementById('local-video-status').style.display = 'none';
                     call = peer.call(partnerId, stream);
                     
                     call.on('stream', (remoteStream) => {
-                        console.log('[CALL] Remote stream received');
                         document.getElementById('remote-video').srcObject = remoteStream;
-                        document.getElementById('remote-video-status').style.display = 'none';
+                        showVideoSection();
                         document.getElementById('status').textContent = 'PEER CONNECTED';
                     });
 
                     call.on('close', () => {
-                        console.log('[CALL] Call closed');
                         handleDisconnect();
-                    });
-
-                    call.on('error', (err) => {
-                        console.error('[CALL ERROR] Type:', err.type, 'Message:', err.message);
-                        console.error('[CALL ERROR] Full error:', err);
-                        document.getElementById('status').textContent = `CALL ERROR: ${err.type} - ${err.message}`;
                     });
                 })
                 .catch(err => {
-                    console.error('[CAMERA ERROR] Error getting media:', err);
-                    console.error('[CAMERA ERROR] Error name:', err.name, 'Message:', err.message);
-                    const errorMsg = 'CAMERA ACCESS DENIED - CONNECTING WITHOUT CAMERA';
-                    document.getElementById('local-video-status').textContent = 'CAMERA DISCONNECTED';
-                    document.getElementById('status').textContent = errorMsg;
-                    addSystemMessage(errorMsg);
-                    // Still attempt to connect without camera
-                    call = peer.call(partnerId);
-                    
-                    call.on('stream', (remoteStream) => {
-                        console.log('[CALL] Remote stream received (no local camera)');
-                        document.getElementById('remote-video').srcObject = remoteStream;
-                        document.getElementById('remote-video-status').style.display = 'none';
-                        document.getElementById('status').textContent = 'PEER CONNECTED (NO CAMERA)';
-                    });
-
-                    call.on('close', () => {
-                        console.log('[CALL] Call closed');
-                        handleDisconnect();
-                    });
-
-                    call.on('error', (err) => {
-                        console.error('[CALL ERROR] Type:', err.type, 'Message:', err.message);
-                        console.error('[CALL ERROR] Full error:', err);
-                        const errorMsg = `CALL ERROR: ${err.type} - ${err.message}`;
-                        document.getElementById('status').textContent = errorMsg;
-                        addSystemMessage(errorMsg);
-                    });
+                    console.error('Error getting media:', err);
+                    document.getElementById('status').textContent = 'CAMERA ACCESS DENIED';
                 });
+        }
+
+        function showVideoSection() {
+            document.getElementById('video-section').classList.remove('hidden');
+            document.getElementById('video-controls').classList.remove('hidden');
+        }
+
+        function hideVideoSection() {
+            document.getElementById('video-section').classList.add('hidden');
+            document.getElementById('video-controls').classList.add('hidden');
         }
 
         function handleKeyPress(event) {
@@ -1144,94 +745,20 @@
         function disconnect() {
             if (call) {
                 call.close();
-                call = null;
             }
             if (conn) {
                 conn.close();
-                conn = null;
-            }
-            if (peer && !peer.destroyed) {
-                peer.destroy();
-                peer = null;
             }
             handleDisconnect();
         }
 
-        function toggleAvailability() {
-            const toggle = document.getElementById('availability-toggle');
-            if (toggle.checked) {
-                makeAvailable();
-            } else {
-                makeUnavailable();
-            }
-        }
-
-        function makeAvailable() {
-            document.getElementById('toggle-status').textContent = 'BECOMING AVAILABLE...';
-            document.getElementById('status').textContent = 'INITIALIZING PEER...';
-            initPeer();
-        }
-
-        function makeUnavailable() {
-            document.getElementById('toggle-status').textContent = 'UNAVAILABLE';
-            document.getElementById('status').textContent = 'OFFLINE';
-            
-            // Close any active connections
-            if (call) {
-                call.close();
-                call = null;
-            }
-            if (conn) {
-                conn.close();
-                conn = null;
-            }
-            if (peer && !peer.destroyed) {
-                peer.destroy();
-                peer = null;
-            }
-            peerOnline = false;
-            
-            // Reset UI
-            if (localStream) {
-                localStream.getTracks().forEach(track => track.stop());
-                localStream = null;
-            }
-            document.getElementById('local-video').srcObject = null;
-            document.getElementById('remote-video').srcObject = null;
-            document.getElementById('local-video-status').style.display = 'block';
-            document.getElementById('local-video-status').textContent = 'OFFLINE';
-            document.getElementById('remote-video-status').style.display = 'block';
-            document.getElementById('remote-video-status').textContent = 'OFFLINE';
-            document.getElementById('video-controls').classList.add('hidden');
-            document.getElementById('connect-btn').style.display = 'inline-block';
-            document.getElementById('disconnect-btn').style.display = 'none';
-            document.getElementById('partner-id').disabled = false;
-            document.getElementById('partner-id').value = '';
-            
-            addSystemMessage('You are now unavailable');
-        }
-
         function handleDisconnect() {
-            console.log('[DISCONNECT] Handling disconnect');
             if (localStream) {
                 localStream.getTracks().forEach(track => track.stop());
-                localStream = null;
             }
             
-            // Reset connection variables
-            call = null;
-            conn = null;
-            
-            // Reset video elements but keep section visible
-            document.getElementById('local-video').srcObject = null;
-            document.getElementById('remote-video').srcObject = null;
-            document.getElementById('local-video-status').style.display = 'block';
-            document.getElementById('local-video-status').textContent = 'WAITING FOR CAMERA';
-            document.getElementById('remote-video-status').style.display = 'block';
-            document.getElementById('remote-video-status').textContent = 'WAITING FOR VIDEO';
-            document.getElementById('video-controls').classList.add('hidden');
-            
-            document.getElementById('status').textContent = 'AVAILABLE - WAITING FOR CONNECTIONS';
+            hideVideoSection();
+            document.getElementById('status').textContent = 'TRANSMISSION LOST';
             document.getElementById('connect-btn').style.display = 'inline-block';
             document.getElementById('disconnect-btn').style.display = 'none';
             document.getElementById('partner-id').disabled = false;
@@ -1240,14 +767,14 @@
             addSystemMessage('Disconnected');
             playSound('disconnect');
 
-            // Keep peer online if availability toggle is on
-            if (document.getElementById('availability-toggle').checked && (!peer || peer.destroyed)) {
+            // Reinitialize peer for new connections
+            setTimeout(() => {
                 initPeer();
-            }
+            }, 1000);
         }
 
         // Initialize
-        checkUsername();
+        initPeer();
 
         // Handle page unload
         window.addEventListener('beforeunload', () => {
