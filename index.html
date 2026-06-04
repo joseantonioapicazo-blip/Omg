@@ -591,15 +591,17 @@
             <div class="id-label">ENTER PARTNER ID</div>
             <div class="input-group">
                 <input type="text" id="partner-id" placeholder="PARTNER ID" maxlength="20">
+                <button class="btn" id="connect-btn" onclick="connectToPeer()">CONNECT</button>
+                <button class="btn btn-danger" id="disconnect-btn" onclick="disconnect()" style="display: none;">HANG UP</button>
             </div>
             <div class="toggle-container">
-                <span class="toggle-label" id="toggle-status">DISCONNECTED</span>
+                <span class="toggle-label" id="toggle-status">UNAVAILABLE</span>
                 <label class="toggle-switch">
-                    <input type="checkbox" id="connection-toggle" onchange="toggleConnection()">
+                    <input type="checkbox" id="availability-toggle" onchange="toggleAvailability()">
                     <span class="toggle-slider"></span>
                 </label>
             </div>
-            <div class="status" id="status">INITIALIZING CONNECTION...</div>
+            <div class="status" id="status">INITIALIZING...</div>
         </div>
 
         <div class="panel video-section" id="video-section">
@@ -751,7 +753,8 @@
             myId = username;
             document.getElementById('my-id').textContent = myId;
             document.getElementById('registration-modal').classList.add('hidden');
-            initPeer();
+            // Don't auto-init peer, let user toggle availability
+            document.getElementById('status').textContent = 'OFFLINE - TOGGLE TO BECOME AVAILABLE';
         }
 
         function checkUsername() {
@@ -759,7 +762,8 @@
             if (savedUsername) {
                 myId = savedUsername;
                 document.getElementById('my-id').textContent = myId;
-                initPeer();
+                // Don't auto-init peer, let user toggle availability
+                document.getElementById('status').textContent = 'OFFLINE - TOGGLE TO BECOME AVAILABLE';
             } else {
                 document.getElementById('registration-modal').classList.remove('hidden');
             }
@@ -802,8 +806,10 @@
                 console.log('[PEER] Peer opened with ID:', id);
                 console.log('[PEER] Peer is now online and ready for connections');
                 peerOnline = true;
-                document.getElementById('status').textContent = 'WAITING FOR PEER - ONLINE';
+                document.getElementById('status').textContent = 'AVAILABLE - WAITING FOR CONNECTIONS';
+                document.getElementById('toggle-status').textContent = 'AVAILABLE';
                 document.getElementById('local-video-status').textContent = 'WAITING FOR CAMERA';
+                addSystemMessage('You are now available for connections');
             });
 
             peer.on('connection', (connection) => {
@@ -878,7 +884,8 @@
                 const errorMsg = `PEER ERROR: ${err.type} - ${err.message}`;
                 document.getElementById('status').textContent = errorMsg;
                 addSystemMessage(errorMsg);
-                document.getElementById('connection-toggle').checked = false;
+                document.getElementById('availability-toggle').checked = false;
+                document.getElementById('toggle-status').textContent = 'UNAVAILABLE';
                 peerOnline = false;
                 // Clean up peer on error to allow reconnection
                 if (peer && !peer.destroyed) {
@@ -908,8 +915,8 @@
             conn.on('open', () => {
                 console.log('[CONN] Connection opened with peer:', conn.peer);
                 document.getElementById('status').textContent = 'LINK ESTABLISHED';
-                document.getElementById('connection-toggle').checked = true;
-                document.getElementById('toggle-status').textContent = 'CONNECTED';
+                document.getElementById('connect-btn').style.display = 'none';
+                document.getElementById('disconnect-btn').style.display = 'inline-block';
                 document.getElementById('partner-id').disabled = true;
                 playSound('connect');
                 addSystemMessage('Connected to peer');
@@ -933,7 +940,6 @@
                 const errorMsg = `CONN ERROR: ${err.type} - ${err.message}`;
                 document.getElementById('status').textContent = errorMsg;
                 addSystemMessage(errorMsg);
-                document.getElementById('connection-toggle').checked = false;
                 handleDisconnect();
             });
         }
@@ -942,11 +948,10 @@
             const partnerId = document.getElementById('partner-id').value.trim();
             
             if (!peerOnline) {
-                const errorMsg = 'PEER NOT ONLINE YET - PLEASE WAIT';
+                const errorMsg = 'YOU ARE NOT AVAILABLE - TOGGLE AVAILABILITY FIRST';
                 document.getElementById('status').textContent = errorMsg;
                 addSystemMessage(errorMsg);
-                document.getElementById('connection-toggle').checked = false;
-                console.log('[CONNECT] Cannot connect - peer is not online yet');
+                console.log('[CONNECT] Cannot connect - user is not available');
                 return;
             }
 
@@ -954,7 +959,6 @@
                 const errorMsg = 'INVALID ID (MUST BE 3-20 CHARACTERS)';
                 document.getElementById('status').textContent = errorMsg;
                 addSystemMessage(errorMsg);
-                document.getElementById('connection-toggle').checked = false;
                 return;
             }
 
@@ -962,7 +966,6 @@
             if (error) {
                 document.getElementById('status').textContent = error.toUpperCase();
                 addSystemMessage(error.toUpperCase());
-                document.getElementById('connection-toggle').checked = false;
                 return;
             }
 
@@ -970,13 +973,11 @@
                 const errorMsg = 'CANNOT CONNECT TO YOURSELF';
                 document.getElementById('status').textContent = errorMsg;
                 addSystemMessage(errorMsg);
-                document.getElementById('connection-toggle').checked = false;
                 return;
             }
 
             console.log('[CONNECT] Attempting to connect to peer:', partnerId);
             document.getElementById('status').textContent = 'CONNECTING...';
-            document.getElementById('toggle-status').textContent = 'CONNECTING...';
 
             conn = peer.connect(partnerId);
             setupConnection();
@@ -1156,13 +1157,58 @@
             handleDisconnect();
         }
 
-        function toggleConnection() {
-            const toggle = document.getElementById('connection-toggle');
+        function toggleAvailability() {
+            const toggle = document.getElementById('availability-toggle');
             if (toggle.checked) {
-                connectToPeer();
+                makeAvailable();
             } else {
-                disconnect();
+                makeUnavailable();
             }
+        }
+
+        function makeAvailable() {
+            document.getElementById('toggle-status').textContent = 'BECOMING AVAILABLE...';
+            document.getElementById('status').textContent = 'INITIALIZING PEER...';
+            initPeer();
+        }
+
+        function makeUnavailable() {
+            document.getElementById('toggle-status').textContent = 'UNAVAILABLE';
+            document.getElementById('status').textContent = 'OFFLINE';
+            
+            // Close any active connections
+            if (call) {
+                call.close();
+                call = null;
+            }
+            if (conn) {
+                conn.close();
+                conn = null;
+            }
+            if (peer && !peer.destroyed) {
+                peer.destroy();
+                peer = null;
+            }
+            peerOnline = false;
+            
+            // Reset UI
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+                localStream = null;
+            }
+            document.getElementById('local-video').srcObject = null;
+            document.getElementById('remote-video').srcObject = null;
+            document.getElementById('local-video-status').style.display = 'block';
+            document.getElementById('local-video-status').textContent = 'OFFLINE';
+            document.getElementById('remote-video-status').style.display = 'block';
+            document.getElementById('remote-video-status').textContent = 'OFFLINE';
+            document.getElementById('video-controls').classList.add('hidden');
+            document.getElementById('connect-btn').style.display = 'inline-block';
+            document.getElementById('disconnect-btn').style.display = 'none';
+            document.getElementById('partner-id').disabled = false;
+            document.getElementById('partner-id').value = '';
+            
+            addSystemMessage('You are now unavailable');
         }
 
         function handleDisconnect() {
@@ -1185,17 +1231,17 @@
             document.getElementById('remote-video-status').textContent = 'WAITING FOR VIDEO';
             document.getElementById('video-controls').classList.add('hidden');
             
-            document.getElementById('status').textContent = 'WAITING FOR PEER';
-            document.getElementById('connection-toggle').checked = false;
-            document.getElementById('toggle-status').textContent = 'DISCONNECTED';
+            document.getElementById('status').textContent = 'AVAILABLE - WAITING FOR CONNECTIONS';
+            document.getElementById('connect-btn').style.display = 'inline-block';
+            document.getElementById('disconnect-btn').style.display = 'none';
             document.getElementById('partner-id').disabled = false;
             document.getElementById('partner-id').value = '';
             
             addSystemMessage('Disconnected');
             playSound('disconnect');
 
-            // Reinitialize peer for new connections
-            if (!peer || peer.destroyed) {
+            // Keep peer online if availability toggle is on
+            if (document.getElementById('availability-toggle').checked && (!peer || peer.destroyed)) {
                 initPeer();
             }
         }
