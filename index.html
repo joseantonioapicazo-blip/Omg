@@ -701,6 +701,11 @@
         let isCameraOn = true;
 
         function initPeer() {
+            // Destroy existing peer before creating new one
+            if (peer && !peer.destroyed) {
+                peer.destroy();
+            }
+
             peer = new Peer(myId);
 
             peer.on('open', (id) => {
@@ -737,6 +742,16 @@
             peer.on('error', (err) => {
                 console.error('Peer error:', err);
                 document.getElementById('status').textContent = 'CONNECTION ERROR';
+                // Clean up peer on error to allow reconnection
+                if (peer && !peer.destroyed) {
+                    peer.destroy();
+                }
+                peer = null;
+            });
+
+            peer.on('close', () => {
+                console.log('Peer connection closed');
+                handleDisconnect();
             });
         }
 
@@ -927,9 +942,15 @@
         function disconnect() {
             if (call) {
                 call.close();
+                call = null;
             }
             if (conn) {
                 conn.close();
+                conn = null;
+            }
+            if (peer && !peer.destroyed) {
+                peer.destroy();
+                peer = null;
             }
             handleDisconnect();
         }
@@ -937,10 +958,15 @@
         function handleDisconnect() {
             if (localStream) {
                 localStream.getTracks().forEach(track => track.stop());
+                localStream = null;
             }
             
+            // Reset connection variables
+            call = null;
+            conn = null;
+            
             hideVideoSection();
-            document.getElementById('status').textContent = 'TRANSMISSION LOST';
+            document.getElementById('status').textContent = 'WAITING FOR PEER';
             document.getElementById('connect-btn').style.display = 'inline-block';
             document.getElementById('disconnect-btn').style.display = 'none';
             document.getElementById('partner-id').disabled = false;
@@ -950,9 +976,9 @@
             playSound('disconnect');
 
             // Reinitialize peer for new connections
-            setTimeout(() => {
+            if (!peer || peer.destroyed) {
                 initPeer();
-            }, 1000);
+            }
         }
 
         // Initialize
