@@ -754,6 +754,7 @@
                 peerOnline = true;
                 document.getElementById('status').textContent = 'WAITING FOR PEER - ONLINE';
                 document.getElementById('local-video-status').textContent = 'WAITING FOR CAMERA';
+                addSystemMessage('Peer is now online and ready for connections');
             });
 
             peer.on('connection', (connection) => {
@@ -798,7 +799,9 @@
                             console.error('[CALL ERROR] Type:', err.type, 'Message:', err.message);
                             console.error('[CALL ERROR] Full error:', err);
                             console.error('[CALL ERROR] Stack:', err.stack);
-                            document.getElementById('status').textContent = `CALL ERROR: ${err.type} - ${err.message}`;
+                            const errorMsg = `CALL ERROR: ${err.type} - ${err.message}`;
+                            document.getElementById('status').textContent = errorMsg;
+                            addSystemMessage(errorMsg);
                         });
 
                         call.on('iceStateChanged', (state) => {
@@ -835,7 +838,9 @@
                             console.error('[CALL ERROR] Type:', err.type, 'Message:', err.message);
                             console.error('[CALL ERROR] Full error:', err);
                             console.error('[CALL ERROR] Stack:', err.stack);
-                            document.getElementById('status').textContent = `CALL ERROR: ${err.type} - ${err.message}`;
+                            const errorMsg = `CALL ERROR: ${err.type} - ${err.message}`;
+                            document.getElementById('status').textContent = errorMsg;
+                            addSystemMessage(errorMsg);
                         });
 
                         call.on('iceStateChanged', (state) => {
@@ -852,7 +857,9 @@
                 console.error('[PEER ERROR] Type:', err.type, 'Message:', err.message);
                 console.error('[PEER ERROR] Full error:', err);
                 console.error('[PEER ERROR] Stack:', err.stack);
-                document.getElementById('status').textContent = `PEER ERROR: ${err.type} - ${err.message}`;
+                const errorMsg = `PEER ERROR: ${err.type} - ${err.message}`;
+                document.getElementById('status').textContent = errorMsg;
+                addSystemMessage(errorMsg);
                 peerOnline = false;
                 // Clean up peer on error to allow reconnection
                 if (peer && !peer.destroyed) {
@@ -871,6 +878,7 @@
                 console.log('[PEER] Peer disconnected from server');
                 peerOnline = false;
                 document.getElementById('status').textContent = 'PEER DISCONNECTED - RECONNECTING...';
+                addSystemMessage('Peer disconnected from server - attempting to reconnect');
                 // Attempt to reconnect
                 if (peer && !peer.destroyed) {
                     peer.reconnect();
@@ -909,13 +917,18 @@
                 console.error('[CONN ERROR] Type:', err.type, 'Message:', err.message);
                 console.error('[CONN ERROR] Full error:', err);
                 console.error('[CONN ERROR] Stack:', err.stack);
-                document.getElementById('status').textContent = `CONN ERROR: ${err.type} - ${err.message}`;
+                const errorMsg = `CONN ERROR: ${err.type} - ${err.message}`;
+                document.getElementById('status').textContent = errorMsg;
+                addSystemMessage(errorMsg);
                 connOpen = false;
                 handleDisconnect();
             });
 
             conn.on('iceStateChanged', (state) => {
                 console.log('[CONN] ICE state changed:', state);
+                if (state === 'connected' || state === 'completed' || state === 'failed') {
+                    addSystemMessage(`ICE state changed to: ${state}`);
+                }
             });
         }
 
@@ -925,6 +938,7 @@
             if (!peerOnline) {
                 document.getElementById('status').textContent = 'PEER NOT ONLINE YET - PLEASE WAIT';
                 console.log('[CONNECT] Cannot connect - peer is not online yet');
+                addSystemMessage('Cannot connect - local peer is not online yet');
                 return;
             }
 
@@ -967,7 +981,9 @@
                 clearInterval(waitForConnection);
                 if (!connOpen) {
                     console.error('[CONNECT] Timeout waiting for data connection');
-                    document.getElementById('status').textContent = 'CONNECTION TIMEOUT - PEER MAY BE OFFLINE';
+                    const timeoutMsg = 'CONNECTION TIMEOUT - PEER MAY BE OFFLINE';
+                    document.getElementById('status').textContent = timeoutMsg;
+                    addSystemMessage(timeoutMsg);
                 }
             }, 15000);
         }
@@ -1017,13 +1033,18 @@
 
                     call.on('iceStateChanged', (state) => {
                         console.log('[CALL] ICE state changed:', state);
+                        if (state === 'connected' || state === 'completed' || state === 'failed') {
+                            addSystemMessage(`Call ICE state changed to: ${state}`);
+                        }
                     });
 
                     // Add timeout for call connection
                     setTimeout(() => {
                         if (call && !document.getElementById('remote-video').srcObject) {
                             console.error('[CALL] Timeout waiting for remote stream');
-                            document.getElementById('status').textContent = 'CALL TIMEOUT - PEER MAY NOT HAVE CAMERA';
+                            const timeoutMsg = 'CALL TIMEOUT - PEER MAY NOT HAVE CAMERA';
+                            document.getElementById('status').textContent = timeoutMsg;
+                            addSystemMessage(timeoutMsg);
                         }
                     }, 20000);
                 })
@@ -1058,6 +1079,9 @@
 
                     call.on('iceStateChanged', (state) => {
                         console.log('[CALL] ICE state changed:', state);
+                        if (state === 'connected' || state === 'completed' || state === 'failed') {
+                            addSystemMessage(`Call ICE state changed to: ${state}`);
+                        }
                     });
                 });
         }
