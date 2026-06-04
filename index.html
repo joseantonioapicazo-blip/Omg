@@ -214,6 +214,20 @@
             border: 1px solid #0f0;
         }
 
+        .video-status {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            padding: 15px 20px;
+            border-radius: 10px;
+            font-size: 1rem;
+            border: 1px solid #0f0;
+            text-align: center;
+            z-index: 10;
+        }
+
         .video-controls {
             display: flex;
             justify-content: center;
@@ -520,14 +534,16 @@
             <div class="status" id="status">INITIALIZING CONNECTION...</div>
         </div>
 
-        <div class="panel video-section hidden" id="video-section">
+        <div class="panel video-section" id="video-section">
             <div class="video-container">
                 <div class="video-label">LOCAL</div>
                 <video id="local-video" autoplay muted playsinline></video>
+                <div id="local-video-status" class="video-status">INITIALIZING...</div>
             </div>
             <div class="video-container">
                 <div class="video-label">REMOTE</div>
                 <video id="remote-video" autoplay playsinline></video>
+                <div id="remote-video-status" class="video-status">WAITING FOR VIDEO</div>
             </div>
         </div>
 
@@ -699,6 +715,7 @@
         let call;
         let isMuted = false;
         let isCameraOn = true;
+        let peerOnline = false;
 
         function initPeer() {
             // Destroy existing peer before creating new one
@@ -706,42 +723,86 @@
                 peer.destroy();
             }
 
+            peerOnline = false;
+            document.getElementById('status').textContent = 'INITIALIZING PEER...';
+            document.getElementById('local-video-status').textContent = 'INITIALIZING...';
+            document.getElementById('remote-video-status').textContent = 'WAITING FOR VIDEO';
+
             peer = new Peer(myId);
 
             peer.on('open', (id) => {
-                document.getElementById('status').textContent = 'WAITING FOR PEER';
+                console.log('[PEER] Peer opened with ID:', id);
+                console.log('[PEER] Peer is now online and ready for connections');
+                peerOnline = true;
+                document.getElementById('status').textContent = 'WAITING FOR PEER - ONLINE';
+                document.getElementById('local-video-status').textContent = 'WAITING FOR CAMERA';
             });
 
             peer.on('connection', (connection) => {
+                console.log('[PEER] Incoming connection from:', connection.peer);
                 conn = connection;
                 setupConnection();
             });
 
             peer.on('call', (incomingCall) => {
+                console.log('[PEER] Incoming call from:', incomingCall.peer);
                 navigator.mediaDevices.getUserMedia({ video: true, audio: true })
                     .then(stream => {
+                        console.log('[CAMERA] Local camera access granted');
                         localStream = stream;
                         document.getElementById('local-video').srcObject = stream;
+                        document.getElementById('local-video-status').style.display = 'none';
                         incomingCall.answer(stream);
                         call = incomingCall;
                         
                         call.on('stream', (remoteStream) => {
+                            console.log('[CALL] Remote stream received');
                             document.getElementById('remote-video').srcObject = remoteStream;
+                            document.getElementById('remote-video-status').style.display = 'none';
                         });
 
-                        showVideoSection();
+                        call.on('error', (err) => {
+                            console.error('[CALL ERROR] Type:', err.type, 'Message:', err.message);
+                            console.error('[CALL ERROR] Full error:', err);
+                            document.getElementById('status').textContent = `CALL ERROR: ${err.type} - ${err.message}`;
+                        });
+
+                        document.getElementById('video-controls').classList.remove('hidden');
                         document.getElementById('status').textContent = 'PEER CONNECTED';
                         playSound('connect');
                     })
                     .catch(err => {
-                        console.error('Error getting media:', err);
+                        console.error('[CAMERA ERROR] Error getting media:', err);
+                        console.error('[CAMERA ERROR] Error name:', err.name, 'Message:', err.message);
+                        document.getElementById('local-video-status').textContent = 'CAMERA DISCONNECTED';
                         document.getElementById('status').textContent = 'CAMERA ACCESS DENIED';
+                        // Still answer the call even without camera
+                        incomingCall.answer();
+                        call = incomingCall;
+                        
+                        call.on('stream', (remoteStream) => {
+                            console.log('[CALL] Remote stream received (no local camera)');
+                            document.getElementById('remote-video').srcObject = remoteStream;
+                            document.getElementById('remote-video-status').style.display = 'none';
+                        });
+
+                        call.on('error', (err) => {
+                            console.error('[CALL ERROR] Type:', err.type, 'Message:', err.message);
+                            console.error('[CALL ERROR] Full error:', err);
+                            document.getElementById('status').textContent = `CALL ERROR: ${err.type} - ${err.message}`;
+                        });
+
+                        document.getElementById('video-controls').classList.remove('hidden');
+                        document.getElementById('status').textContent = 'PEER CONNECTED (NO CAMERA)';
+                        playSound('connect');
                     });
             });
 
             peer.on('error', (err) => {
-                console.error('Peer error:', err);
-                document.getElementById('status').textContent = 'CONNECTION ERROR';
+                console.error('[PEER ERROR] Type:', err.type, 'Message:', err.message);
+                console.error('[PEER ERROR] Full error:', err);
+                document.getElementById('status').textContent = `PEER ERROR: ${err.type} - ${err.message}`;
+                peerOnline = false;
                 // Clean up peer on error to allow reconnection
                 if (peer && !peer.destroyed) {
                     peer.destroy();
@@ -750,13 +811,25 @@
             });
 
             peer.on('close', () => {
-                console.log('Peer connection closed');
+                console.log('[PEER] Peer connection closed');
+                peerOnline = false;
                 handleDisconnect();
+            });
+
+            peer.on('disconnected', () => {
+                console.log('[PEER] Peer disconnected from server');
+                peerOnline = false;
+                document.getElementById('status').textContent = 'PEER DISCONNECTED - RECONNECTING...';
+                // Attempt to reconnect
+                if (peer && !peer.destroyed) {
+                    peer.reconnect();
+                }
             });
         }
 
         function setupConnection() {
             conn.on('open', () => {
+                console.log('[CONN] Connection opened with peer:', conn.peer);
                 document.getElementById('status').textContent = 'LINK ESTABLISHED';
                 document.getElementById('connect-btn').style.display = 'none';
                 document.getElementById('disconnect-btn').style.display = 'inline-block';
@@ -773,11 +846,14 @@
             });
 
             conn.on('close', () => {
+                console.log('[CONN] Connection closed');
                 handleDisconnect();
             });
 
             conn.on('error', (err) => {
-                console.error('Connection error:', err);
+                console.error('[CONN ERROR] Type:', err.type, 'Message:', err.message);
+                console.error('[CONN ERROR] Full error:', err);
+                document.getElementById('status').textContent = `CONN ERROR: ${err.type} - ${err.message}`;
                 handleDisconnect();
             });
         }
@@ -785,6 +861,12 @@
         function connectToPeer() {
             const partnerId = document.getElementById('partner-id').value.trim();
             
+            if (!peerOnline) {
+                document.getElementById('status').textContent = 'PEER NOT ONLINE YET - PLEASE WAIT';
+                console.log('[CONNECT] Cannot connect - peer is not online yet');
+                return;
+            }
+
             if (partnerId.length < 3 || partnerId.length > 20) {
                 document.getElementById('status').textContent = 'INVALID ID (MUST BE 3-20 CHARACTERS)';
                 return;
@@ -801,6 +883,7 @@
                 return;
             }
 
+            console.log('[CONNECT] Attempting to connect to peer:', partnerId);
             document.getElementById('status').textContent = 'CONNECTING...';
 
             conn = peer.connect(partnerId);
@@ -809,34 +892,56 @@
             // Initiate video call
             navigator.mediaDevices.getUserMedia({ video: true, audio: true })
                 .then(stream => {
+                    console.log('[CAMERA] Local camera access granted for outgoing call');
                     localStream = stream;
                     document.getElementById('local-video').srcObject = stream;
+                    document.getElementById('local-video-status').style.display = 'none';
                     call = peer.call(partnerId, stream);
                     
                     call.on('stream', (remoteStream) => {
+                        console.log('[CALL] Remote stream received');
                         document.getElementById('remote-video').srcObject = remoteStream;
-                        showVideoSection();
+                        document.getElementById('remote-video-status').style.display = 'none';
                         document.getElementById('status').textContent = 'PEER CONNECTED';
                     });
 
                     call.on('close', () => {
+                        console.log('[CALL] Call closed');
                         handleDisconnect();
+                    });
+
+                    call.on('error', (err) => {
+                        console.error('[CALL ERROR] Type:', err.type, 'Message:', err.message);
+                        console.error('[CALL ERROR] Full error:', err);
+                        document.getElementById('status').textContent = `CALL ERROR: ${err.type} - ${err.message}`;
                     });
                 })
                 .catch(err => {
-                    console.error('Error getting media:', err);
-                    document.getElementById('status').textContent = 'CAMERA ACCESS DENIED';
+                    console.error('[CAMERA ERROR] Error getting media:', err);
+                    console.error('[CAMERA ERROR] Error name:', err.name, 'Message:', err.message);
+                    document.getElementById('local-video-status').textContent = 'CAMERA DISCONNECTED';
+                    document.getElementById('status').textContent = 'CAMERA ACCESS DENIED - CONNECTING WITHOUT CAMERA';
+                    // Still attempt to connect without camera
+                    call = peer.call(partnerId);
+                    
+                    call.on('stream', (remoteStream) => {
+                        console.log('[CALL] Remote stream received (no local camera)');
+                        document.getElementById('remote-video').srcObject = remoteStream;
+                        document.getElementById('remote-video-status').style.display = 'none';
+                        document.getElementById('status').textContent = 'PEER CONNECTED (NO CAMERA)';
+                    });
+
+                    call.on('close', () => {
+                        console.log('[CALL] Call closed');
+                        handleDisconnect();
+                    });
+
+                    call.on('error', (err) => {
+                        console.error('[CALL ERROR] Type:', err.type, 'Message:', err.message);
+                        console.error('[CALL ERROR] Full error:', err);
+                        document.getElementById('status').textContent = `CALL ERROR: ${err.type} - ${err.message}`;
+                    });
                 });
-        }
-
-        function showVideoSection() {
-            document.getElementById('video-section').classList.remove('hidden');
-            document.getElementById('video-controls').classList.remove('hidden');
-        }
-
-        function hideVideoSection() {
-            document.getElementById('video-section').classList.add('hidden');
-            document.getElementById('video-controls').classList.add('hidden');
         }
 
         function handleKeyPress(event) {
@@ -956,6 +1061,7 @@
         }
 
         function handleDisconnect() {
+            console.log('[DISCONNECT] Handling disconnect');
             if (localStream) {
                 localStream.getTracks().forEach(track => track.stop());
                 localStream = null;
@@ -965,7 +1071,15 @@
             call = null;
             conn = null;
             
-            hideVideoSection();
+            // Reset video elements but keep section visible
+            document.getElementById('local-video').srcObject = null;
+            document.getElementById('remote-video').srcObject = null;
+            document.getElementById('local-video-status').style.display = 'block';
+            document.getElementById('local-video-status').textContent = 'WAITING FOR CAMERA';
+            document.getElementById('remote-video-status').style.display = 'block';
+            document.getElementById('remote-video-status').textContent = 'WAITING FOR VIDEO';
+            document.getElementById('video-controls').classList.add('hidden');
+            
             document.getElementById('status').textContent = 'WAITING FOR PEER';
             document.getElementById('connect-btn').style.display = 'inline-block';
             document.getElementById('disconnect-btn').style.display = 'none';
